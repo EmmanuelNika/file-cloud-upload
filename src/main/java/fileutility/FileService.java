@@ -21,45 +21,15 @@ public class FileService {
 
     private static final Pattern FILE_EXTENSION_PATTERN = Pattern.compile("([^\\s]+(\\.(?i)(png|txt|doc|csv|pdf))$)");
 
-    private String name;
+    public File file;
 
-    private String fileType;
-
-    private String base64;
-
-    public FileService(String name, String fileType, String base64) {
-        this.name = name;
-        this.fileType = fileType;
-        this.base64 = base64;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(String fileType) {
-        this.fileType = fileType;
-    }
-
-    public String getBase64() {
-        return base64;
-    }
-
-    public void setBase64(String base64) {
-        this.base64 = base64;
+    public FileService(File file) {
+        this.file = file;
     }
 
     public String uploadToDigitalOcean() throws IllegalAccessException {
 
-        byte[] byteImage = Base64.getDecoder().decode(this.base64.getBytes());
+        byte[] byteImage = Base64.getDecoder().decode(this.file.getBase64().getBytes());
 
         Properties properties = new Properties();
 
@@ -72,9 +42,9 @@ public class FileService {
             String bucketEndpoint = properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.URL));
             String bucketRegion = properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.REGION));
             String bucket = properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.BUCKET));
-            String filepath = properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.PATH)) != null ? properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.PATH)) + PropertiesStatics.PATH_SUFFIX.formatted(this.name, this.fileType) : "." + PropertiesStatics.PATH_SUFFIX.formatted(this.name, this.fileType);
+            String filepath = properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.PATH)) != null ? properties.getProperty(PropertiesStatics.PROPERTIES_FORMAT.formatted(PropertiesStatics.PROPERTIES_PREFIX, CloudApps.DIGITAL_OCEAN, PropertiesStatics.PATH)) + PropertiesStatics.PATH_SUFFIX.formatted(this.file.getName(), this.file.getFileType()) : "." + PropertiesStatics.PATH_SUFFIX.formatted(this.file.getName(), this.file.getFileType());
 
-            Matcher matcher = FILE_EXTENSION_PATTERN.matcher(this.name + "." + this.fileType);
+            Matcher matcher = FILE_EXTENSION_PATTERN.matcher(this.file.getName() + "." + this.file.getFileType());
             if (Boolean.FALSE.equals(matcher.matches())) {
                 throw new IllegalAccessException("Invalid file type");
 
@@ -92,7 +62,7 @@ public class FileService {
 
                 ObjectMetadata om = new ObjectMetadata();
                 om.setContentLength(byteImage.length);
-                om.setContentType(fileType);
+                om.setContentType(this.file.getFileType());
 
                 space.putObject(bucket, filepath, is, om);
 
